@@ -1,4 +1,4 @@
-
+const os = require('os')
 const { exec } = require('child_process')
 const mqtt = require('mqtt')
 require('dotenv').config()
@@ -27,10 +27,8 @@ var clientOptions = {
   password: process.env.MQTT_PASSWORD,
   rejectUnauthorized: false
 }
-console.log(mqttHost)
-console.log(clientOptions)
 var mqttClient = mqtt.connect(mqttHost, clientOptions)
-topicNamespace = "picklebook-pro"
+topicNamespace = process.env.MQTT_NAMESPACE || os.hostname()
 
 function publish(topic, message, options) {
   topic = topicNamespace + "/" + topic
@@ -38,16 +36,18 @@ function publish(topic, message, options) {
   mqttClient.publish(topic, message, options)
 }
 
+var cameraNames = process.env.CAMERA_NAMES.split(",")
+console.log(cameraNames)
+
 Tail = require('tail-forever')
  
-var tail = new Tail("/Users/technicalpickles/Library/Logs/Micro\ Snitch.log")
+var tail = new Tail(process.env.HOME + "/Library/Logs/Micro\ Snitch.log")
 var cameras = {}
 
-function deskCameraOn() { 
-  return cameras["FaceTime HD Camera (Display)"] || cameras["FaceTime HD Camera (Display) #2"] || false
-}
-
 tail.on("line", function(line) {
+  // example lines:
+  // Mar 16, 2018 at 9:20:58 PM: Video Device became active: FaceTime HD Camera (Display)
+  // Mar 16, 2018 at 9:21:13 PM: Video Device became inactive: FaceTime HD Camera (Display)
   var match = line.match(/^(.*): Video Device became (active|inactive): (.*)/)
   if (match) {
     var camera = match[3]
@@ -56,10 +56,13 @@ tail.on("line", function(line) {
     cameras[camera] = status
     console.log(cameras)
 
-    var anyOn = deskCameraOn()
+    var anyOn = cameraNames.some(function (name) { return cameras[name] })
+
     console.log("Any on: " + anyOn)
     var message = anyOn ? 'on' : 'off'
     publish("desk-cameras/state", message, {retain: true})
+  } else {
+    console.log("unrecognized: " + line)
   }
 });
 
