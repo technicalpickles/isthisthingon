@@ -26,42 +26,28 @@ var clientOptions = {
 var mqttClient = mqtt.connect(mqttHost, clientOptions)
 topicNamespace = process.env.MQTT_NAMESPACE || os.hostname()
 
+var cameraNames = process.env.CAMERA_NAMES.split(",")
+console.log(cameraNames)
+
 function publish(topic, message, options) {
   topic = topicNamespace + "/" + topic
   console.log("publish " + topic + ": " + message)
   mqttClient.publish(topic, message, options)
 }
-
-var cameraNames = process.env.CAMERA_NAMES.split(",")
-console.log(cameraNames)
-
-Tail = require('tail-forever')
  
-var tail = new Tail(process.env.HOME + "/Library/Logs/Micro\ Snitch.log")
+const MicroSnitchParser = require('./micro_snitch_parser')
+var parser = new MicroSnitchParser(process.env.HOME + "/Library/Logs/Micro\ Snitch.log")
 var cameras = {}
 
-tail.on("line", function(line) {
-  // example lines:
-  // Mar 16, 2018 at 9:20:58 PM: Video Device became active: FaceTime HD Camera (Display)
-  // Mar 16, 2018 at 9:21:13 PM: Video Device became inactive: FaceTime HD Camera (Display)
-  var match = line.match(/^(.*): Video Device became (active|inactive): (.*)/)
-  if (match) {
-    var camera = match[3]
-    var status = match[2] == 'active' ? true : false
+parser.on("status", function(camera, status) {
+  cameras[camera] = status
+  var anyOn = cameraNames.some(function (name) { return cameras[name] })
 
-    cameras[camera] = status
-    console.log(cameras)
-
-    var anyOn = cameraNames.some(function (name) { return cameras[name] })
-
-    console.log("Any on: " + anyOn)
-    var message = anyOn ? 'on' : 'off'
-    publish("desk-cameras/state", message, {retain: true})
-  } else {
-    console.log("unrecognized: " + line)
-  }
+  console.log("Any on: " + anyOn)
+  var message = anyOn ? 'on' : 'off'
+  publish("desk-cameras/state", message, {retain: true})
 });
 
-tail.on("error", function(error) {
+parser.on("error", function(error) {
   console.log('ERROR: ', error)
-});
+})
