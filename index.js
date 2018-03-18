@@ -1,24 +1,20 @@
 const os = require('os')
 const { exec } = require('child_process')
 const mqtt = require('mqtt')
+const wifi = require('node-wifi')
 require('dotenv').config()
 
-exec('/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I', (err, stdout, stderr) => {
-  if (err) {
-    return
-  }
+wifi.init({
+    iface : null // network interface, choose a random wifi interface if set to null
+});
 
-  var lines = stdout.split("\n")
-  var attributes = {}
-  for (line of stdout.split("\n")) {
-    var match = line.match(/\s*(.*): (.*)/)
-    if (match) {
-      attributes[match[1]] = match[2]
+wifi.getCurrentConnections(function(err, currentConnections) {
+    if (err) {
+        console.log(err);
     }
-  }
 
-  console.log("SSID: " + attributes["SSID"])
-})
+    console.log(currentConnections);
+});
 
 var mqttHost = process.env.MQTT_HOST
 var clientOptions = {
