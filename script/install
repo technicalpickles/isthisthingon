@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+echo "Installing isthisthingon..."
+
+APP_PATH=$(pwd)
+USER_NAME=$(whoami)
+
+mkdir -p ~/Library/LaunchAgents
+
+cp config/org.isthisthingon.plist ~/Library/LaunchAgents/org.isthisthingon.plist
+
+sed -i '' -e "s#%USER%#$USER_NAME#g" ~/Library/LaunchAgents/org.isthisthingon.plist
+sed -i '' -e "s#%PATH%#$APP_PATH#g" ~/Library/LaunchAgents/org.isthisthingon.plist
+
+launchctl load -w -F ~/Library/LaunchAgents/org.isthisthingon.plist

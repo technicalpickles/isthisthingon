@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd "$(dirname "$0")/.." || return
+
+test -z "$NODE_ENV" &&
+  export NODE_ENV='development'
+
+forever_args="--minUptime 1000ms --spinSleepTime 1000ms"
+if [ "$NODE_ENV" = "development" ]; then
+  /usr/bin/env forever $forever_args -f config/forever/development.json 
+else
+  eval $(nodenv init -)
+  /usr/bin/env forever start config/forever/production.json
+fi
