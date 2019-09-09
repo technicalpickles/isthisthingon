@@ -12,7 +12,7 @@
     "dotenv": "^5.0.1",
     "mdns": "^2.3.4",
     "mqtt": "^2.16.0",
-    "node-wifi": "^2.0.4",
+    "node-wifi": "^2.0.12",
     "plist": "^2.1.0",
     "tail-forever": "^0.3.15"
   }
