@@ -9,7 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "dotenv": "^5.0.1",
+    "dotenv": "^8.2.0",
     "mdns": "^2.3.4",
     "mqtt": "^2.16.0",
     "node-wifi": "^2.0.4",
